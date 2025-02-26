@@ -2,9 +2,10 @@
 
 pragma solidity ^0.8.19;
 
-import {Script} from "forge-std/Script.sol";
+import {Script, console2} from "forge-std/Script.sol";
 import {Raffle} from "../src/Raffle.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
+import {CreateSubscription, FundSubscription} from "./interaction.s.sol";
 
 contract DeployRaffle is Script {
     uint256 entryFees;
@@ -12,23 +13,46 @@ contract DeployRaffle is Script {
     address _vrfV2PlusWrapper;
     uint32 callbackGasLimit;
 
-    function run() public {}
-
-    function deployRaffle() public returns (Raffle, HelperConfig) {
+    function run() public returns (HelperConfig, Raffle) {
         HelperConfig helperConfig = new HelperConfig();
 
-        HelperConfig.NetworkConfig memory networkConfig = helperConfig
-            .getNetworkConfig();
+        HelperConfig.NetworkConfig memory networkConfig = helperConfig.getConfig();
+
+        console2.log("Entry Fee: ", networkConfig.entryFees);
+        console2.log("Time Interval: ", networkConfig.timeInterval);
+        console2.log("VRF Wrapperr: ", networkConfig.vrfCoordinatorV2_5);
+        console2.log("Callback Gas Limit: ", networkConfig.callbackGasLimit);
+        console2.log("Callback Gas Limit: ", networkConfig.subscriptionId);
+        // console2.log("Callback Gas Limit: ", networkConfig.gasLane);
 
         vm.startBroadcast();
+        // vm.startBroadcast(networkConfig.account);
+        if (networkConfig.subscriptionId == 0) {
+            CreateSubscription createSubscription = new CreateSubscription();
+            FundSubscription fundSubscription = new FundSubscription();
+
+            uint256 subId = createSubscription.createSubscription(networkConfig.vrfCoordinatorV2_5);
+            fundSubscription.fundSubscription(networkConfig.vrfCoordinatorV2_5, subId);
+
+        }
+
         Raffle raffle = new Raffle(
-            networkConfig.entryFees,
+            networkConfig.subscriptionId,
+            networkConfig.gasLane,
             networkConfig.timeInterval,
-            networkConfig._vrfV2PlusWrapper,
-            networkConfig.callbackGasLimit
+            networkConfig.entryFees,
+            networkConfig.callbackGasLimit,
+            networkConfig.vrfCoordinatorV2_5
         );
+
+        console2.log("Entry FFFFFFe: ", raffle.getEntranceFees());
+        //         console2.log("Time Interval: ", raffle.timeInterval);
+        //         console2.log("VRF Wrapperr: ", raffle.vrfCoordinatorV2_5);
+        //         console2.log("Callback Gas : ", raffle.callbackGasLimit);
+        //         console2.log("Callback Gas : ", raffle.subscriptionId);
+        // console2.log("Callback Gas Limit: ", networkConfig.gasLane);
         vm.stopBroadcast();
 
-        return (raffle, helperConfig);
+        return (helperConfig, raffle);
     }
 }
