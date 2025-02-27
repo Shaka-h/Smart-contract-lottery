@@ -150,7 +150,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
                 )
             })
         );
-        // Quiz... is this redundant?
+        // Quiz... is this redundant? Yes coz this fn requestRandomWords already has an emit
         emit RequestedRaffleWinner(requestId);
     }
 
