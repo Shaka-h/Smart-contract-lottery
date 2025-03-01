@@ -10,7 +10,7 @@ abstract contract contractConstants {
     uint256 public constant SEPOLIA_CHAIN_ID = 11155111;
     uint256 public constant LOCAL_CHAIN_ID = 31337;
     uint96 public immutable i_base_fee = 1e9;
-    uint96 public immutable i_gas_price = 0.25 ether;
+    uint96 public immutable i_gas_price = 0.05 ether;
     int256 public immutable i_wei_per_unit_link = 4e15;
     address public FOUNDRY_DEFAULT_SENDER = 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38;
 }
@@ -52,16 +52,16 @@ contract HelperConfig is Script, contractConstants {
         return net;
     }
 
-    function getSepoliaEthConfig() public view returns (NetworkConfig memory) {
+    function getSepoliaEthConfig() public pure returns (NetworkConfig memory) {
         return NetworkConfig({
-            subscriptionId: 1,
-            gasLane: 0x000000000000000000000000000000000000,
+            subscriptionId: 0,
+            gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
             link: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
             entryFees: 1 ether,
             timeInterval: 30,
             vrfCoordinatorV2_5: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
             callbackGasLimit: 500000,
-            account: FOUNDRY_DEFAULT_SENDER
+            account: 0x5134FCA2Ce708AEf8672ffB6561288ee81E30543
         });
     }
 

@@ -8,6 +8,7 @@ import {Raffle} from "../../src/Raffle.sol";
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {Vm} from "forge-std/Vm.sol";
+import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 contract RaffleTest is Test, Script {
     Raffle raffle;
@@ -128,34 +129,71 @@ contract RaffleTest is Test, Script {
         _;
     }
 
-    function testPerformUpkeepCanOnlyRunIfCheckUpkeepIsTrue() upKeepNeeded external{
+    function testPerformUpkeepCanOnlyRunIfCheckUpkeepIsTrue() external upKeepNeeded {
         // vm.expectRevert(Raffle.Raffle__UpkeepNotNeeded.selector);  does not revert cause it only reverts if upkeep is not satisfied
         raffle.performUpkeep("");
     }
 
-    function testPerformUpkeepRevertsIfCheckUpkeepIsFalse() external{
+    function testPerformUpkeepRevertsIfCheckUpkeepIsFalse() external {
         uint256 balance = 0;
         uint256 players = 0;
         Raffle.RaffleState state = raffle.getRaffleState();
 
-        vm.expectRevert(
-            abi.encodeWithSelector(Raffle.Raffle__UpkeepNotNeeded.selector, balance, players, state)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Raffle.Raffle__UpkeepNotNeeded.selector, balance, players, state));
         raffle.performUpkeep("");
     }
 
-    function testPerformUpkeepUpdatesRaffleState() upKeepNeeded external {
-        raffle.performUpkeep(""); 
+    function testPerformUpkeepUpdatesRaffleState() external upKeepNeeded {
+        raffle.performUpkeep("");
         Raffle.RaffleState state = raffle.getRaffleState();
         assert(state == Raffle.RaffleState.CALCULATING);
     }
 
-    function testPerformUpkeepUpdatesRaffleEmitsRequestId() upKeepNeeded external {
-        vm.recordLogs(); //record all the next emited events 
+    function testPerformUpkeepUpdatesRaffleEmitsRequestId() external upKeepNeeded {
+        vm.recordLogs(); //record all the next emited events
         raffle.performUpkeep("");
         Vm.Log[] memory entries = vm.getRecordedLogs(); //store the logs in this array
+        console.log("Number of logs: ", entries.length);
+        bytes32 requestId = entries[1].topics[1];
+        assert(requestId != 0);
         Raffle.RaffleState state = raffle.getRaffleState();
-        assert(state == Raffle.RaffleState.CALCULATING);
+        assert(uint256(state) > 0);
     }
 
+    function testfulfillRandomWordsCanOnlyBecalledAfterPerformUpkeep(uint256 requestId) external upKeepNeeded {
+        //its the vrfcoordinator calling the fullfillRandomWords
+        vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
+        VRFCoordinatorV2_5Mock(vrfCoordinatorV2_5).fulfillRandomWords(requestId, address(raffle));
+    }
+
+    // function testFulfillRandomWordsPicksAWinnerResetsAndSendsMoney() external {
+    //     //create player array
+
+    //     uint256 startingIndex = 1;
+    //     uint256 entrantlength = 3;
+
+    //     for (uint256 i = startingIndex; i < startingIndex + entrantlength; i++) {
+    //         address player = address(uint160(i));
+    //         // hoax(player, 1 ether);
+    //         vm.prank(PLAYER);
+    //         raffle.enterRaffle{value: entryFees}();
+    //     }
+
+    //     vm.warp(block.timestamp + timeInterval + 1);
+    //     vm.roll(block.number + 1);
+
+    //     vm.recordLogs(); //record all the next emited events
+    //     raffle.performUpkeep("");
+    //     Vm.Log[] memory entries = vm.getRecordedLogs(); //store the logs in this array
+    //     console.log("Number of logs: ", entries.length);
+    //     bytes32 requestId = entries[1].topics[1];
+
+    //     VRFCoordinatorV2_5Mock(vrfCoordinatorV2_5).fulfillRandomWords(uint256(requestId), address(raffle));
+
+    //     Raffle.RaffleState raffleState = raffle.getRaffleState();
+
+    //     assert(uint256(raffleState) == 0);
+    //     // assert(winnerBalance == startingBalance + prize);
+    //     // assert(endingTimeStamp > startingTimeStamp);
+    // }
 }

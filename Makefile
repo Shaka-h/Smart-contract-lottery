@@ -32,6 +32,8 @@ zkbuild :; forge build --zksync
 
 test :; forge test
 
+test-sepolia :; forge test --fork-url $(SEPOLIA_RPC_URL)
+
 zktest :; foundryup-zksync && forge test --zksync && foundryup
 
 snapshot :; forge snapshot
@@ -50,7 +52,7 @@ ifeq ($(findstring --network sepolia,$(ARGS)),--network sepolia)
 endif
 
 deploy-sepolia:
-	@forge script script/DeployFundMe.s.sol:DeployFundMe $(NETWORK_ARGS)
+	@forge script script/DeployRaffle.s.sol:DeployRaffle $(NETWORK_ARGS)
 
 # As of writing, the Alchemy zkSync RPC URL is not working correctly 
 deploy-zk:

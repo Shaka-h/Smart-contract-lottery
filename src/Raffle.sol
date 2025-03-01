@@ -205,4 +205,8 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     function getEntranceFees() public view returns (uint256) {
         return i_entranceFee;
     }
+
+    function getLastTimestamp() public view returns (uint256) {
+        return s_lastTimeStamp;
+    }
 }
